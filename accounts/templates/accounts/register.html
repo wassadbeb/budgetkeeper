@@ -3,20 +3,21 @@
 {% block main_class %}auth-wrap{% endblock %}
 {% block content %}
 <div class="auth-card">
-  <div class="auth-brand"><span class="brand-mark">B</span> BudgetKeeper</div>
+  <div class="auth-brand"><span class="brand-mark" aria-hidden="true">B</span> BudgetKeeper</div>
   <h1>Создание аккаунта</h1>
   <p class="sub">После регистрации появятся базовые категории и можно будет добавить первый счёт.</p>
-  <form method="post" novalidate>
+  <form method="post" novalidate id="register-form">
     {% csrf_token %}
     {% if form.non_field_errors %}
       <div class="message error">{{ form.non_field_errors }}</div>
     {% endif %}
     {% for field in form %}
-      <div class="form-row">
+      <div class="form-row" data-field="{{ field.name }}">
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
         {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
         {% if field.errors %}{{ field.errors }}{% endif %}
+        <span class="field-error" role="alert"></span>
       </div>
     {% endfor %}
     <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
@@ -25,4 +26,42 @@
     <span>Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a></span>
   </div>
 </div>
+
+<script>
+  (function () {
+    var form = document.getElementById("register-form");
+    if (!form) return;
+
+    function setError(name, text) {
+      var row = form.querySelector('[data-field="' + name + '"]');
+      var box = row && row.querySelector(".field-error");
+      if (box) box.textContent = text || "";
+    }
+
+    form.addEventListener("submit", function (e) {
+      var email = document.getElementById("id_email").value.trim();
+      var fullName = document.getElementById("id_full_name").value.trim();
+      var pass1 = document.getElementById("id_password1").value;
+      var pass2 = document.getElementById("id_password2").value;
+      var valid = true;
+
+      var emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      setError("email", emailOk ? "" : "Введите корректный адрес электронной почты.");
+      valid = valid && emailOk;
+
+      setError("full_name", fullName ? "" : "Укажите фамилию и имя.");
+      valid = valid && !!fullName;
+
+      var passOk = pass1.length >= 8;
+      setError("password1", passOk ? "" : "Пароль должен содержать не менее 8 символов.");
+      valid = valid && passOk;
+
+      var matchOk = pass2 === pass1;
+      setError("password2", matchOk ? "" : "Пароли не совпадают.");
+      valid = valid && matchOk;
+
+      if (!valid) e.preventDefault();
+    });
+  })();
+</script>
 {% endblock %}
