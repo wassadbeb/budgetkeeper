@@ -13,9 +13,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from .agent import ask_agent
 from .ai import build_budget_advice, suggest_category
 from .forms import AccountForm, BudgetForm, CategoryForm, OperationForm
-from .models import AISuggestion, Account, Budget, Category, Operation
+from .models import AIMessage, AISuggestion, Account, Budget, Category, Operation
 from .services import get_fallback_category
 
 MONTHS_RU = [
@@ -448,3 +449,41 @@ def health(request):
 
 def api_ping(request):
     return JsonResponse({"status": "ok", "message": "pong"})
+
+
+@login_required
+def agent_page(request):
+    """Страница диалога с ИИ-агентом."""
+    history = list(
+        AIMessage.objects.filter(user=request.user).order_by("created_at")[:20]
+    )
+    return render(request, "finance/agent.html", {"history": history})
+
+
+@login_required
+@require_POST
+def agent_send(request):
+    """Принимает сообщение, вызывает агента и возвращает ответ (JSON)."""
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "Некорректный JSON."}, status=400)
+
+    user_text = str(payload.get("message", "")).strip()
+    if not user_text or len(user_text) > 1000:
+        return JsonResponse(
+            {"error": "Сообщение должно быть от 1 до 1000 символов."}, status=422
+        )
+
+    # История диалога из БД (последние 10 сообщений).
+    history = list(
+        AIMessage.objects.filter(user=request.user).order_by("created_at")[:10]
+    )
+    history = [{"role": m.role, "content": m.content} for m in history]
+
+    answer = ask_agent(request.user, user_text, history)
+
+    AIMessage.objects.create(user=request.user, role=AIMessage.Role.USER, content=user_text)
+    AIMessage.objects.create(user=request.user, role=AIMessage.Role.ASSISTANT, content=answer)
+
+    return JsonResponse({"reply": answer})

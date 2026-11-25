@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}ИИ-ассистент — BudgetKeeper{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>ИИ-ассистент</h1>
+  <p class="muted">Финансовый ассистент анализирует ваш бюджет и отвечает на вопросы о расходах.</p>
+</section>
+
+<div class="card chat-card">
+  <div class="chat-log" id="chat-log" aria-live="polite">
+    {% for m in history %}
+    <div class="chat-msg {{ m.role }}">
+      <span class="chat-role">{{ m.get_role_display }}</span>
+      <p class="chat-text">{{ m.content }}</p>
+    </div>
+    {% empty %}
+    <div class="chat-empty">Задайте вопрос о своих расходах, например: «На чём можно сэкономить?»</div>
+    {% endfor %}
+  </div>
+
+  <form class="chat-form" id="chat-form" autocomplete="off">
+    {% csrf_token %}
+    <label class="visually-hidden" for="chat-input">Ваше сообщение</label>
+    <textarea id="chat-input" name="message" rows="2" maxlength="1000"
+              placeholder="Например: куда уходит больше всего денег?"></textarea>
+    <button class="btn btn-primary" type="submit" id="chat-send">Отправить</button>
+  </form>
+  <div class="chat-error" id="chat-error" role="alert"></div>
+</div>
+
+<script>
+  (function () {
+    var form = document.getElementById("chat-form");
+    var log = document.getElementById("chat-log");
+    var input = document.getElementById("chat-input");
+    var sendBtn = document.getElementById("chat-send");
+    var errBox = document.getElementById("chat-error");
+    var csrf = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    function addMessage(role, text) {
+      var empty = log.querySelector(".chat-empty");
+      if (empty) empty.remove();
+      var wrap = document.createElement("div");
+      wrap.className = "chat-msg " + role;
+      var who = document.createElement("span");
+      who.className = "chat-role";
+      // Используем textContent, а не innerHTML — защита от XSS.
+      who.textContent = role === "user" ? "Вы" : "Ассистент";
+      var p = document.createElement("p");
+      p.className = "chat-text";
+      p.textContent = text;
+      wrap.appendChild(who);
+      wrap.appendChild(p);
+      log.appendChild(wrap);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var text = input.value.trim();
+      if (!text) return;
+      errBox.textContent = "";
+      addMessage("user", text);
+      input.value = "";
+      sendBtn.disabled = true;
+      try {
+        var resp = await fetch("{% url 'finance:agent_send' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf,
+          },
+          body: JSON.stringify({ message: text }),
+        });
+        var data = await resp.json();
+        if (!resp.ok) {
+          errBox.textContent = data.error || "Не удалось получить ответ.";
+        } else {
+          addMessage("assistant", data.reply);
+        }
+      } catch (err) {
+        errBox.textContent = "Сервис временно недоступен. Попробуйте позже.";
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -20,6 +20,7 @@
       <a href="{% url 'finance:budget_list' %}" class="{% if request.resolver_match.url_name == 'budget_list' %}active{% endif %}">Бюджеты</a>
       <a href="{% url 'finance:category_list' %}" class="{% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">Категории</a>
       <a href="{% url 'finance:account_list' %}" class="{% if request.resolver_match.url_name == 'account_list' %}active{% endif %}">Счета</a>
+      <a href="{% url 'finance:agent' %}" class="{% if request.resolver_match.url_name == 'agent' %}active{% endif %}">ИИ-ассистент</a>
       {% if user.role == 'admin' %}
       <a href="{% url 'accounts:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %} admin-link">Админ-панель</a>
       {% endif %}
