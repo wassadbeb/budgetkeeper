@@ -134,20 +134,25 @@ python manage.py seed_demo
 
 ## Git
 
-Репозиторий инициализируется в папке `Проект/`. Файлы `.env`, `.venv`,
-`__pycache__`, `staticfiles` исключены через `.gitignore`.
+Репозиторий размещён на GitHub: https://github.com/wassadbeb/budgetkeeper
+
+Файлы `.env`, `.venv`, `__pycache__`, `staticfiles` исключены через
+`.gitignore`. История коммитов ведётся по смысловым этапам разработки:
+
+```bash
+git log --oneline --graph
+```
+
+Для повторного создания репозитория с нуля:
 
 ```bash
 git init
 git add .
 git commit -m "chore: initial Django project structure"
 git branch -M main
-git remote add origin <URL_REPO>
+git remote add origin https://github.com/wassadbeb/budgetkeeper.git
 git push -u origin main
 ```
-
-Удалённый репозиторий и `push` выполняются вручную: в учебном окружении
-GitHub-аккаунт не подключён.
 
 ## Скриншоты
 
