@@ -2,13 +2,15 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from finance.services import create_default_categories
 
+from .decorators import api_role_required, role_required
 from .forms import (
     LoginForm,
     PasswordResetConfirmForm,
@@ -97,4 +99,51 @@ def password_reset_confirm(request: HttpRequest, token: str) -> HttpResponse:
         request,
         "accounts/password_reset_confirm.html",
         {"form": form},
+    )
+
+
+@login_required
+def profile(request: HttpRequest) -> HttpResponse:
+    """Личный кабинет пользователя со сводной статистикой."""
+    from finance.models import Account, Budget, Operation
+
+    stats = {
+        "accounts": Account.objects.filter(user=request.user, is_active=True).count(),
+        "operations": Operation.objects.filter(
+            user=request.user, is_deleted=False
+        ).count(),
+        "budgets": Budget.objects.filter(user=request.user).count(),
+    }
+    return render(request, "accounts/profile.html", {"stats": stats})
+
+
+@role_required([User.Role.ADMIN])
+def admin_dashboard(request: HttpRequest) -> HttpResponse:
+    """Панель администратора: управление пользователями (только роль admin)."""
+    from finance.models import Operation
+
+    users = User.objects.all().order_by("-created_at")
+    total_operations = Operation.objects.count()
+    context = {
+        "users": users,
+        "total_users": users.count(),
+        "total_operations": total_operations,
+    }
+    return render(request, "accounts/admin_dashboard.html", context)
+
+
+@api_role_required([User.Role.ADMIN])
+def admin_stats_api(request: HttpRequest) -> JsonResponse:
+    """JSON-эндпоинт со статистикой (демонстрация защиты REST API)."""
+    from finance.models import Operation
+
+    return JsonResponse(
+        {
+            "total_users": User.objects.count(),
+            "total_operations": Operation.objects.count(),
+            "roles": {
+                "user": User.objects.filter(role=User.Role.USER).count(),
+                "admin": User.objects.filter(role=User.Role.ADMIN).count(),
+            },
+        }
     )

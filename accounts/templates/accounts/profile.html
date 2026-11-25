@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Личный кабинет — BudgetKeeper{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Личный кабинет</h1>
+  <p class="muted">Ваша учётная запись и сводная статистика.</p>
+</section>
+
+<div class="profile-grid">
+  <article class="card">
+    <h2>Профиль</h2>
+    <dl class="kv">
+      <dt>Email</dt><dd>{{ user.email }}</dd>
+      <dt>ФИО</dt><dd>{{ user.full_name }}</dd>
+      <dt>Роль</dt><dd>{{ user.get_role_display }}</dd>
+      <dt>Дата регистрации</dt><dd>{{ user.created_at|date:"d.m.Y" }}</dd>
+    </dl>
+  </article>
+
+  <div class="stats-grid">
+    <article class="card stat-card">
+      <span class="stat-label">Счета</span>
+      <span class="stat-value">{{ stats.accounts }}</span>
+    </article>
+    <article class="card stat-card">
+      <span class="stat-label">Операции</span>
+      <span class="stat-value">{{ stats.operations }}</span>
+    </article>
+    <article class="card stat-card">
+      <span class="stat-label">Бюджеты</span>
+      <span class="stat-value">{{ stats.budgets }}</span>
+    </article>
+  </div>
+</div>
+{% endblock %}

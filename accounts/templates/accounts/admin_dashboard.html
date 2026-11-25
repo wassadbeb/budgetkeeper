@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Панель администратора — BudgetKeeper{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Панель администратора</h1>
+  <p class="muted">Доступна только пользователям с ролью «Администратор».</p>
+</section>
+
+<div class="stats-grid">
+  <article class="card stat-card">
+    <span class="stat-label">Пользователей</span>
+    <span class="stat-value">{{ total_users }}</span>
+  </article>
+  <article class="card stat-card">
+    <span class="stat-label">Операций</span>
+    <span class="stat-value">{{ total_operations }}</span>
+  </article>
+</div>
+
+<section class="card">
+  <h2>Учётные записи</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>ФИО</th>
+          <th>Роль</th>
+          <th>Активен</th>
+          <th>Создан</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.email }}</td>
+          <td>{{ u.full_name }}</td>
+          <td>{{ u.get_role_display }}</td>
+          <td>{% if u.is_active %}Да{% else %}Нет{% endif %}</td>
+          <td>{{ u.created_at|date:"d.m.Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

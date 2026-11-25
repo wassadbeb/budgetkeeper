@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Доступ запрещён — BudgetKeeper{% endblock %}
+{% block content %}
+<section class="error-page">
+  <div class="error-code">403</div>
+  <h1>Доступ запрещён</h1>
+  <p class="muted">У вашей учётной записи недостаточно прав для просмотра этой страницы.</p>
+  <a class="btn btn-primary" href="{% url 'finance:dashboard' %}">Вернуться на главную</a>
+</section>
+{% endblock %}

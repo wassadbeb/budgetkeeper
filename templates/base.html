@@ -14,16 +14,21 @@
     <a class="brand" href="{% url 'finance:dashboard' %}">
       <span class="brand-mark">B</span> BudgetKeeper
     </a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Основная навигация">
       <a href="{% url 'finance:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Обзор</a>
       <a href="{% url 'finance:operation_list' %}" class="{% if request.resolver_match.url_name == 'operation_list' %}active{% endif %}">Операции</a>
       <a href="{% url 'finance:budget_list' %}" class="{% if request.resolver_match.url_name == 'budget_list' %}active{% endif %}">Бюджеты</a>
       <a href="{% url 'finance:category_list' %}" class="{% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">Категории</a>
       <a href="{% url 'finance:account_list' %}" class="{% if request.resolver_match.url_name == 'account_list' %}active{% endif %}">Счета</a>
+      {% if user.role == 'admin' %}
+      <a href="{% url 'accounts:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %} admin-link">Админ-панель</a>
+      {% endif %}
     </nav>
     <div class="userbox">
-      <span class="avatar">{{ user.full_name|first|upper }}</span>
-      <span class="name">{{ user.full_name }}</span>
+      <a class="userinfo" href="{% url 'accounts:profile' %}">
+        <span class="avatar" aria-hidden="true">{{ user.full_name|first|upper }}</span>
+        <span class="name">{{ user.full_name }}</span>
+      </a>
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
         <button class="btn btn-ghost btn-sm" type="submit">Выйти</button>
