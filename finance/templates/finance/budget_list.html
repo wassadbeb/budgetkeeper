@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Бюджеты — BudgetKeeper{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Бюджеты</h1>
+    <p class="muted">{{ month_label }} · лимиты по категориям расходов</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="?month={{ prev_month }}">← {{ prev_month }}</a>
+    <a class="btn" href="?month={{ next_month }}">{{ next_month }} →</a>
+  </div>
+</div>
+
+<div class="stats" style="grid-template-columns: repeat(2, 1fr);">
+  <div class="stat">
+    <span class="label">Общий лимит</span>
+    <strong>{{ total_limit|floatformat:"2g" }} ₽</strong>
+    <span class="hint">на {{ month_label|lower }}</span>
+  </div>
+  <div class="stat">
+    <span class="label">Потрачено</span>
+    <strong class="{% if total_spent > total_limit %}expense{% endif %}">{{ total_spent|floatformat:"2g" }} ₽</strong>
+    <span class="hint">из запланированного</span>
+  </div>
+</div>
+
+<div class="two-col">
+  <section class="card">
+    <div class="card-head">
+      <h2>Лимиты на месяц</h2>
+      <span class="muted small">{{ rows|length }} шт.</span>
+    </div>
+    {% if rows %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Категория</th>
+              <th class="amount">Лимит</th>
+              <th class="amount">Потрачено</th>
+              <th>Прогресс</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td>
+                  <span class="dot" style="background: {{ row.budget.category.color }};"></span>
+                  {{ row.budget.category.name }}
+                </td>
+                <td class="amount">{{ row.budget.limit_amount|floatformat:"2g" }} ₽</td>
+                <td class="amount {% if row.over %}expense{% endif %}">{{ row.spent|floatformat:"2g" }} ₽</td>
+                <td style="min-width: 150px;">
+                  <div class="progress {% if row.over %}over{% elif row.percent >= 80 %}warn{% endif %}">
+                    <span style="width: {{ row.bar_percent }}%;"></span>
+                  </div>
+                  <span class="small {% if row.over %}expense{% else %}muted{% endif %}">
+                    {{ row.percent }}%{% if row.over %} · превышение{% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">
+        На этот месяц лимиты не заданы.<br>Добавьте первый лимит в форме справа.
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Новый лимит</h2>
+    </div>
+    {% if has_categories %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+          <div class="form-row" style="margin-bottom: 12px;">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}{{ field.errors }}{% endif %}
+          </div>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">Сохранить лимит</button>
+      </form>
+      <p class="help" style="margin-top: 12px;">
+        Если лимит на этот месяц уже существует, он будет обновлён.
+      </p>
+    {% else %}
+      <div class="empty">
+        Сначала создайте категорию расходов.<br>
+        <a href="{% url 'finance:category_list' %}">Перейти к категориям</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

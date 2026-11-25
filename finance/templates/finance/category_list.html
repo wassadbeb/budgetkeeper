@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Категории — BudgetKeeper{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Категории</h1>
+    <p class="muted">Справочник статей доходов и расходов</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <section class="card">
+    <div class="card-head">
+      <h2>Мои категории</h2>
+      <span class="muted small">{{ categories|length }} шт.</span>
+    </div>
+    {% if categories %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Название</th>
+              <th>Тип</th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for category in categories %}
+              <tr>
+                <td><span class="dot" style="background: {{ category.color }};"></span>{{ category.name }}</td>
+                <td>
+                  {% if category.kind == 'income' %}
+                    <span class="badge badge-income">Доход</span>
+                  {% else %}
+                    <span class="badge badge-expense">Расход</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if category.is_system %}
+                    <span class="badge badge-system">Базовая</span>
+                  {% else %}
+                    <span class="badge">Своя</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">Категорий пока нет. Добавьте первую в форме справа.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Новая категория</h2>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+      {% for field in form %}
+        <div class="form-row" style="margin-bottom: 12px;">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}{{ field.errors }}{% endif %}
+        </div>
+      {% endfor %}
+      <button class="btn btn-primary" type="submit">Добавить категорию</button>
+    </form>
+    <p class="help" style="margin-top: 12px;">
+      Базовые категории создаются автоматически при регистрации. Их нельзя удалить,
+      чтобы не потерять историю операций.
+    </p>
+  </section>
+</div>
+{% endblock %}

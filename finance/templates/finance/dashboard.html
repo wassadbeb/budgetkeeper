@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Обзор — BudgetKeeper{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Обзор финансов</h1>
+    <p class="muted">{{ month_label }} · все суммы в рублях</p>
+  </div>
+  <div class="page-actions">
+    <form class="month-form" method="get">
+      <input type="month" name="month" value="{{ month_value }}" aria-label="Месяц">
+      <button class="btn" type="submit">Показать</button>
+    </form>
+    <a class="btn btn-primary" href="{% url 'finance:operation_create' %}">+ Операция</a>
+  </div>
+</div>
+
+{% if not has_accounts %}
+  <div class="notice">
+    У вас пока нет счетов. <a href="{% url 'finance:account_list' %}">Добавьте первый счёт</a>,
+    чтобы начать учитывать операции.
+  </div>
+{% endif %}
+
+<div class="stats">
+  <div class="stat">
+    <span class="label">Доходы за месяц</span>
+    <strong class="income">+ {{ income|floatformat:"2g" }} ₽</strong>
+    <span class="hint">поступления за {{ month_label|lower }}</span>
+  </div>
+  <div class="stat">
+    <span class="label">Расходы за месяц</span>
+    <strong class="expense">− {{ expense|floatformat:"2g" }} ₽</strong>
+    <span class="hint">траты за {{ month_label|lower }}</span>
+  </div>
+  <div class="stat">
+    <span class="label">Текущий баланс</span>
+    <strong>{{ balance|floatformat:"2g" }} ₽</strong>
+    <span class="hint">по всем активным счетам</span>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <section class="card">
+    <div class="card-head">
+      <h2>Последние операции</h2>
+      <a href="{% url 'finance:operation_list' %}">Все операции →</a>
+    </div>
+    {% if recent_operations %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Дата</th>
+              <th>Категория</th>
+              <th>Описание</th>
+              <th class="amount">Сумма</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for op in recent_operations %}
+              <tr>
+                <td class="muted small">{{ op.occurred_at|date:"d.m.Y" }}</td>
+                <td>
+                  <span class="dot" style="background: {{ op.category.color }};"></span>
+                  {{ op.category.name }}
+                  {% if op.created_by_ai %}<span class="badge badge-ai">ИИ</span>{% endif %}
+                </td>
+                <td class="muted">{{ op.description|default:"—"|truncatechars:46 }}</td>
+                <td class="amount {% if op.operation_type == 'income' %}income{% else %}expense{% endif %}">
+                  {% if op.operation_type == 'income' %}+{% else %}−{% endif %}{{ op.amount|floatformat:"2g" }} ₽
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty">
+        За этот месяц операций пока нет.<br>
+        <a href="{% url 'finance:operation_create' %}">Добавить первую операцию</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <h2>Бюджеты</h2>
+        <a href="{% url 'finance:budget_list' %}?month={{ month_value }}">Настроить</a>
+      </div>
+      {% if budget_rows %}
+        {% for row in budget_rows %}
+          <div class="budget-item">
+            <div class="budget-line">
+              <span><span class="dot" style="background: {{ row.budget.category.color }};"></span>{{ row.budget.category.name }}</span>
+              <span class="muted">{{ row.spent|floatformat:"2g" }} / {{ row.budget.limit_amount|floatformat:"2g" }} ₽</span>
+            </div>
+            <div class="progress {% if row.over %}over{% elif row.percent >= 80 %}warn{% endif %}">
+              <span style="width: {{ row.bar_percent }}%;"></span>
+            </div>
+            <div class="small {% if row.over %}expense{% else %}muted{% endif %}">
+              {% if row.over %}Превышен на {{ row.spent|floatformat:"2g" }} ₽{% else %}Использовано {{ row.percent }}%{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">Лимиты на этот месяц не заданы.</div>
+      {% endif %}
+    </section>
+
+    <section class="card advice">
+      <div class="card-head">
+        <h2>Советы по бюджету</h2>
+        <span class="badge badge-ai">ИИ</span>
+      </div>
+      <ul>
+        {% for tip in advice %}<li>{{ tip }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Структура расходов</h2>
+      </div>
+      {% if category_rows %}
+        {% for row in category_rows %}
+          <div class="category-row">
+            <div class="category-line">
+              <span>{{ row.name }}</span>
+              <span class="muted">{{ row.total|floatformat:"2g" }} ₽ · {{ row.percent }}%</span>
+            </div>
+            <div class="bar">
+              <span style="width: {{ row.percent }}%; background: {{ row.color }};"></span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">Нет расходов за выбранный месяц.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

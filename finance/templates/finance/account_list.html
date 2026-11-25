@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Счета — BudgetKeeper{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Счета</h1>
+    <p class="muted">Карты, наличные и банковские счета</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <section class="card">
+    <div class="card-head">
+      <h2>Мои счета</h2>
+      <span class="muted small">{{ rows|length }} шт.</span>
+    </div>
+    {% if rows %}
+      {% for row in rows %}
+        <div class="account-card">
+          <div class="row">
+            <span class="account-icon">{{ row.account.name|first|upper }}</span>
+            <div>
+              <div style="font-weight: 700;">{{ row.account.name }}</div>
+              <div class="muted small">{{ row.account.get_account_type_display }} · {{ row.account.currency }}</div>
+            </div>
+          </div>
+          <div class="balance {% if row.balance < 0 %}expense{% endif %}">
+            {{ row.balance|floatformat:"2g" }} ₽
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">Счетов пока нет. Добавьте первый в форме справа.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Новый счёт</h2>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+      {% for field in form %}
+        <div class="form-row" style="margin-bottom: 12px;">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}{{ field.errors }}{% endif %}
+        </div>
+      {% endfor %}
+      <button class="btn btn-primary" type="submit">Добавить счёт</button>
+    </form>
+    <p class="help" style="margin-top: 12px;">
+      Начальный остаток — сумма, которая уже есть на счёте. Дальше баланс
+      рассчитывается по операциям.
+    </p>
+  </section>
+</div>
+{% endblock %}

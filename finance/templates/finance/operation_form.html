@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Новая операция — BudgetKeeper{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Новая операция</h1>
+    <p class="muted">Доход или расход. Категорию можно подобрать автоматически по описанию.</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'finance:dashboard' %}">← Назад</a>
+</div>
+
+<div class="card" style="max-width: 760px;">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="{{ form.operation_type.id_for_label }}">{{ form.operation_type.label }}</label>
+        {{ form.operation_type }}
+        {% if form.operation_type.errors %}{{ form.operation_type.errors }}{% endif %}
+      </div>
+      <div class="form-row">
+        <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}{{ form.amount.errors }}{% endif %}
+      </div>
+      <div class="form-row">
+        <label for="{{ form.account.id_for_label }}">{{ form.account.label }}</label>
+        {{ form.account }}
+        {% if form.account.errors %}{{ form.account.errors }}{% endif %}
+      </div>
+      <div class="form-row">
+        <label for="{{ form.occurred_at.id_for_label }}">{{ form.occurred_at.label }}</label>
+        {{ form.occurred_at }}
+        {% if form.occurred_at.errors %}{{ form.occurred_at.errors }}{% endif %}
+      </div>
+      <div class="form-row full">
+        <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+        {{ form.category }}
+        {% if form.category.errors %}{{ form.category.errors }}{% endif %}
+        <span class="help">Оставьте пустым — категория будет подобрана по описанию.</span>
+      </div>
+      <div class="form-row full">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.errors %}{{ form.description.errors }}{% endif %}
+      </div>
+    </div>
+
+    <div class="ai-box">
+      <div class="ai-title">✦ ИИ-помощник по категориям</div>
+      <p class="small muted" style="margin-top: 4px;">
+        Напишите описание и нажмите кнопку — сервис предложит категорию и покажет уверенность.
+      </p>
+      <button class="btn btn-sm" type="button" id="ai-suggest" style="margin-top: 8px;">
+        Подобрать категорию
+      </button>
+      <div class="ai-result" id="ai-result"></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Сохранить операцию</button>
+      <a class="btn btn-ghost" href="{% url 'finance:dashboard' %}">Отмена</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const aiButton = document.getElementById("ai-suggest");
+  const aiResult = document.getElementById("ai-result");
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  if (aiButton) {
+    aiButton.addEventListener("click", async () => {
+      const description = document.getElementById("id_description").value.trim();
+      const operationType = document.getElementById("id_operation_type").value;
+      if (description.length < 3) {
+        aiResult.textContent = "Сначала опишите операцию (минимум 3 символа).";
+        return;
+      }
+      aiButton.disabled = true;
+      aiResult.textContent = "Подбираю категорию…";
+      try {
+        const response = await fetch("{% url 'finance:api_suggest_category' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({ description, operation_type: operationType }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          aiResult.textContent = data.error || "Не удалось подобрать категорию.";
+          return;
+        }
+        if (data.category_id) {
+          document.getElementById("id_category").value = data.category_id;
+        }
+        const percent = Math.round(data.confidence * 100);
+        const source = data.source === "llm" ? "языковая модель" : "локальные правила";
+        aiResult.innerHTML =
+          "Категория: <b>" + data.category + "</b> · уверенность " + percent +
+          "% · " + source + (data.reason ? "<br><span class='muted small'>" + data.reason + "</span>" : "");
+      } catch (error) {
+        aiResult.textContent = "Сервис недоступен. Выберите категорию вручную.";
+      } finally {
+        aiButton.disabled = false;
+      }
+    });
+  }
+</script>
+{% endblock %}
