@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — BudgetKeeper{% endblock %}
+{% block main_class %}auth-wrap{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <div class="auth-brand"><span class="brand-mark">B</span> BudgetKeeper</div>
+  <h1>Создание аккаунта</h1>
+  <p class="sub">После регистрации появятся базовые категории и можно будет добавить первый счёт.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="message error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% for field in form %}
+      <div class="form-row">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+        {% if field.errors %}{{ field.errors }}{% endif %}
+      </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+  </form>
+  <div class="auth-links">
+    <span>Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a></span>
+  </div>
+</div>
+{% endblock %}
