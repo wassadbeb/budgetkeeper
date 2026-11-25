@@ -83,3 +83,25 @@ class PasswordResetToken(models.Model):
 
     def is_valid(self) -> bool:
         return self.used_at is None and self.expires_at > timezone.now()
+
+
+class Profile(models.Model):
+    """Дополнительный профиль пользователя (связь 1:1 с User)."""
+
+    user = models.OneToOneField(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name="Пользователь",
+    )
+    phone = models.CharField("Телефон", max_length=20, blank=True)
+    birth_date = models.DateField("Дата рождения", null=True, blank=True)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+
+    class Meta:
+        db_table = "profiles"
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+    def __str__(self) -> str:
+        return f"Профиль {self.user.email}"

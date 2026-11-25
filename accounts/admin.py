@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
-from .models import PasswordResetToken, User
+from .models import PasswordResetToken, Profile, User
 
 
 class AdminUserCreationForm(forms.ModelForm):
@@ -93,3 +93,10 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     list_filter = ("used_at",)
     search_fields = ("user__email",)
     readonly_fields = ("token_hash", "created_at")
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "phone", "birth_date", "created_at")
+    search_fields = ("user__email", "phone")
+    readonly_fields = ("created_at",)

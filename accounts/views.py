@@ -17,7 +17,7 @@ from .forms import (
     PasswordResetRequestForm,
     RegisterForm,
 )
-from .models import User
+from .models import Profile, User
 from .services import consume_token, create_reset_token, get_valid_token
 
 
@@ -28,6 +28,7 @@ def register(request: HttpRequest) -> HttpResponse:
     form = RegisterForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
+        Profile.objects.get_or_create(user=user)
         create_default_categories(user)
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         messages.success(request, "Аккаунт создан. Добро пожаловать в BudgetKeeper!")

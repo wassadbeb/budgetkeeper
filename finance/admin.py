@@ -1,7 +1,7 @@
 """Админ-панель финансового модуля."""
 from django.contrib import admin
 
-from .models import AISuggestion, Account, Budget, Category, Operation
+from .models import AIMessage, AISuggestion, Account, Budget, Category, Operation
 
 
 @admin.register(Account)
@@ -55,4 +55,12 @@ class AISuggestionAdmin(admin.ModelAdmin):
     )
     list_filter = ("source", "accepted")
     search_fields = ("input_text", "user__email")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(AIMessage)
+class AIMessageAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "user", "role", "content")
+    list_filter = ("role",)
+    search_fields = ("content", "user__email")
     readonly_fields = ("created_at",)

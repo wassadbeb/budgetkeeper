@@ -6,8 +6,8 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from accounts.models import User
-from finance.models import Account, AISuggestion, Budget, Category, Operation
+from accounts.models import Profile, User
+from finance.models import AIMessage, Account, AISuggestion, Budget, Category, Operation
 from finance.services import create_default_categories
 
 
@@ -39,6 +39,26 @@ class Command(BaseCommand):
         if demo_created:
             demo.set_password("Demo12345!")
             demo.save()
+
+        Profile.objects.get_or_create(
+            user=demo, defaults={"phone": "+7 900 000-00-00"}
+        )
+        Profile.objects.get_or_create(
+            user=admin, defaults={"phone": "+7 900 111-11-11"}
+        )
+
+        if not AIMessage.objects.filter(user=demo).exists():
+            AIMessage.objects.create(
+                user=demo,
+                role=AIMessage.Role.USER,
+                content="На чём можно сэкономить в этом месяце?",
+            )
+            AIMessage.objects.create(
+                user=demo,
+                role=AIMessage.Role.ASSISTANT,
+                content="Вы уже израсходовали значительную часть лимита на «Кафе и рестораны». "
+                "Попробуйте готовить дома пару раз в неделю — это сэкономит до 2 000 ₽.",
+            )
 
         create_default_categories(demo)
         create_default_categories(admin)

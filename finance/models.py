@@ -301,3 +301,39 @@ class AISuggestion(models.Model):
 
     def __str__(self) -> str:
         return f"{self.input_text[:40]} → {self.suggested_category}"
+
+
+class AIMessage(models.Model):
+    """Сообщение диалога с ИИ-агентом (история чата)."""
+
+    class Role(models.TextChoices):
+        USER = "user", "Пользователь"
+        ASSISTANT = "assistant", "Ассистент"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_messages",
+        verbose_name="Пользователь",
+    )
+    role = models.CharField("Роль", max_length=10, choices=Role.choices)
+    content = models.TextField("Текст сообщения")
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+        db_table = "ai_messages"
+        verbose_name = "Сообщение ИИ-агента"
+        verbose_name_plural = "Сообщения ИИ-агента"
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["user", "created_at"], name="idx_ai_messages_user_created"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(role__in=["user", "assistant"]),
+                name="ck_ai_messages_role",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_role_display()}: {self.content[:40]}"
