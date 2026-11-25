@@ -1,5 +1,6 @@
 """Настройки проекта BudgetKeeper."""
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "rest_framework",
     "accounts.apps.AccountsConfig",
     "finance.apps.FinanceConfig",
 ]
@@ -125,3 +127,20 @@ PASSWORD_RESET_TIMEOUT = 1800
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+
+# Django REST Framework: аутентификация по JWT (Bearer), по умолчанию всё
+# защищено — приватные эндпоинты требуют токен.
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+}
+
+# Срок жизни JWT-токенов (учебные значения).
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
